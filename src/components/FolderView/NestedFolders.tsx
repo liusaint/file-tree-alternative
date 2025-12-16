@@ -25,6 +25,7 @@ export function NestedFolders(props: NestedFoldersProps) {
     const [excludedFolders, setExcludedFolders] = useRecoilState(recoilState.excludedFolders);
     const [focusedFolder, setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
     const [folderFileCountMap] = useRecoilState(recoilState.folderFileCountMap);
+    const [pinnedFolders, setPinnedFolders] = useRecoilState(recoilState.pinnedFolders);
     const [_view, setView] = useRecoilState(recoilState.view);
 
     const handleFolderNameClick = (folderPath: string) => setActiveFolderPath(folderPath);
@@ -35,8 +36,17 @@ export function NestedFolders(props: NestedFoldersProps) {
     };
 
     const getSortedFolderTree = (folderTree: FolderTree[]) => {
-        let newTree: FolderTree[] = folderTree;
+        let newTree: FolderTree[] = [...folderTree];
         newTree = newTree.sort((a, b) => {
+            const aPinnedIndex = pinnedFolders.indexOf(a.folder.path);
+            const bPinnedIndex = pinnedFolders.indexOf(b.folder.path);
+            const aPinned = aPinnedIndex !== -1;
+            const bPinned = bPinnedIndex !== -1;
+            if (aPinned || bPinned) {
+                if (aPinned && !bPinned) return -1;
+                if (!aPinned && bPinned) return 1;
+                if (aPinned && bPinned && aPinnedIndex !== bPinnedIndex) return aPinnedIndex - bPinnedIndex;
+            }
             if (plugin.settings.sortFoldersBy === 'name') {
                 return a.folder.name.localeCompare(b.folder.name, 'en', { numeric: true });
             } else if (plugin.settings.sortFoldersBy === 'item-number') {
@@ -76,6 +86,20 @@ export function NestedFolders(props: NestedFoldersProps) {
                     .onClick(() => focusOnFolder(rootFolder));
             });
         }
+
+        const isPinned = pinnedFolders.includes(folder.path);
+        folderMenu.addItem((menuItem) => {
+            menuItem
+                .setTitle(isPinned ? 'Unpin' : 'Pin to Top')
+                .setIcon('pin')
+                .onClick(() => {
+                    setPinnedFolders((currentPinned) => {
+                        const alreadyPinned = currentPinned.includes(folder.path);
+                        if (alreadyPinned) return currentPinned.filter((pinnedPath) => pinnedPath !== folder.path);
+                        return [...currentPinned, folder.path];
+                    });
+                });
+        });
 
         // CRUD Items
         folderMenu.addItem((menuItem) => {
@@ -214,7 +238,7 @@ export function NestedFolders(props: NestedFoldersProps) {
 
     let sortedFolderTree = useMemo(
         () => getSortedFolderTree(props.folderTree.children),
-        [props.folderTree.children, excludedFolders, plugin.settings.sortFoldersBy]
+        [props.folderTree.children, excludedFolders, pinnedFolders, plugin.settings.sortFoldersBy]
     );
 
     return (

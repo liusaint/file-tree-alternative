@@ -28,6 +28,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     const [activeFolderPath, setActiveFolderPath] = useRecoilState(recoilState.activeFolderPath);
     const [ozFileList, setOzFileList] = useRecoilState(recoilState.ozFileList);
     const [ozPinnedFiles, setOzPinnedFiles] = useRecoilState(recoilState.ozPinnedFileList);
+    const [pinnedFolders, setPinnedFolders] = useRecoilState(recoilState.pinnedFolders);
     const [openFolders, setOpenFolders] = useRecoilState(recoilState.openFolders);
     const [_folderTree, setFolderTree] = useRecoilState(recoilState.folderTree);
     const [excludedFolders, setExcludedFolders] = useRecoilState(recoilState.excludedFolders);
@@ -105,6 +106,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         setExcludedFolders(getExcludedFolders());
         setExcludedExtensions(getExcludedExtensions());
         setOzPinnedFiles(getPinnedFilesFromSettings());
+        setPinnedFolders(getPinnedFoldersFromSettings());
         setOpenFolders(getOpenFoldersFromSettings());
         setShowSubFolders(plugin.settings.showFilesFromSubFolders);
         setInitialActiveFolderPath();
@@ -139,6 +141,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
     // State Change Handlers
     useEffect(() => savePinnedFilesToSettings(), [ozPinnedFiles]);
+    useEffect(() => savePinnedFoldersToSettings(), [pinnedFolders]);
     useEffect(() => saveOpenFoldersToSettings(), [openFolders]);
     useEffect(() => saveExcludedFoldersToSettings(), [excludedFolders]);
 
@@ -202,6 +205,16 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         return pinnedFiles;
     }
 
+    // Load The String List and Set Pinned Folders State
+    function getPinnedFoldersFromSettings(): string[] {
+        let pinnedFolders: string[] = [];
+        let localStoragePinnedFolders = localStorage.getItem(plugin.keys.pinnedFoldersKey);
+        if (localStoragePinnedFolders) {
+            pinnedFolders = JSON.parse(localStoragePinnedFolders);
+        }
+        return pinnedFolders;
+    }
+
     // Get The Folders State and Save in Data as String Array
     function saveOpenFoldersToSettings() {
         let openFoldersToSave: string[] = [];
@@ -218,6 +231,11 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             pinnedFilesToSave.push(file.path);
         }
         localStorage.setItem(plugin.keys.pinnedFilesKey, JSON.stringify(pinnedFilesToSave));
+    }
+
+    function savePinnedFoldersToSettings() {
+        const pinnedFoldersToSave = pinnedFolders.map((p) => p.trim()).filter((p) => p.length > 0);
+        localStorage.setItem(plugin.keys.pinnedFoldersKey, JSON.stringify(pinnedFoldersToSave));
     }
 
     // Save Excluded Folders to Settings as String
@@ -337,6 +355,13 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
                 currentFocusedFolder = focusedFolder;
                 return focusedFolder;
             });
+            if (changeType === 'rename' && oldPathBeforeRename) {
+                setPinnedFolders((currentPinnedFolders) =>
+                    currentPinnedFolders.map((pinnedPath) => (pinnedPath === oldPathBeforeRename ? file.path : pinnedPath))
+                );
+            } else if (changeType === 'delete') {
+                setPinnedFolders((currentPinnedFolders) => currentPinnedFolders.filter((pinnedPath) => pinnedPath !== file.path));
+            }
             setFolderTree(FileTreeUtils.createFolderTree({ startFolder: currentFocusedFolder, plugin: plugin, excludedFolders: excludedFolders }));
             // if active folder is renamed, activefolderpath needs to be refreshed
             if (changeType === 'rename' && oldPathBeforeRename && currentActiveFolderPath === oldPathBeforeRename) {

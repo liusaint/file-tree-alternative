@@ -12,6 +12,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
     keys = {
         activeFolderPathKey: 'fileTreePlugin-ActiveFolderPath',
         pinnedFilesKey: 'fileTreePlugin-PinnedFiles',
+        pinnedFoldersKey: 'fileTreePlugin-PinnedFolders',
         openFoldersKey: 'fileTreePlugin-OpenFolders',
         customHeightKey: 'fileTreePlugin-CustomHeight',
         customWidthKey: 'fileTreePlugin-CustomWidth',

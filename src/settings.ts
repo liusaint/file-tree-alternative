@@ -470,5 +470,19 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                         new Notice('The pinned files are cleared...');
                     });
             });
+
+        new Setting(containerEl)
+            .setName('Clear Pinned Folders')
+            .setDesc(`This button will clear the pinned folders in the folder pane.`)
+            .addButton((button) => {
+                let b = button
+                    .setTooltip('Click here to clear the pinned folders')
+                    .setButtonText('Click for Clearing the Pinned folders')
+                    .onClick(async () => {
+                        lsh.removeFromLocalStorage({ key: this.plugin.keys.pinnedFoldersKey });
+                        this.plugin.refreshTreeLeafs();
+                        new Notice('The pinned folders are cleared...');
+                    });
+            });
     }
 }

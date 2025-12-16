@@ -48,6 +48,11 @@ export const ozPinnedFileList = atom({
     default: [] as OZFile[],
 });
 
+export const pinnedFolders = atom({
+    key: 'fileTreePinnedFoldersState',
+    default: [] as string[],
+});
+
 export const openFolders = atom({
     key: 'fileTreeOpenFoldersState',
     default: [] as string[],
