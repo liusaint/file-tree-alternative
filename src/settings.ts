@@ -409,8 +409,8 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName('Excluded Folder Paths')
             .setDesc(
-                `Provide full path of folders, which you want to exclude from listing in file tree, divided by comma. i.e. 'Personal/Attachments, Work/Documents/Folders'.
-            All subfolders are going to be excluded, as well. You need to reload the vault or use "Reload File Tree" button below to make changes effective.`
+                `Provide full folder paths or regular expressions to exclude from the file tree, separated by comma or new line. e.g. 'Personal/Attachments, ^_assets$, \\.assets'.
+            All matching subfolders are excluded. Reload the vault or use "Reload File Tree" button below to make changes effective.`
             )
             .addTextArea((text) =>
                 text.setValue(this.plugin.settings.excludedFolders).onChange((value) => {

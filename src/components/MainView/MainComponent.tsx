@@ -166,11 +166,12 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         let excludedString: string = plugin.settings.excludedFolders;
         let excludedFolders: string[] = [];
         if (excludedString) {
-            for (let excludedFolder of excludedString.split(',')) {
-                if (excludedFolder !== '') excludedFolders.push(excludedFolder.trim());
+            for (let excludedFolder of excludedString.split(/,|\n/)) {
+                const trimmedFolder = excludedFolder.trim();
+                if (trimmedFolder !== '') excludedFolders.push(trimmedFolder);
             }
         }
-        return excludedFolders;
+        return Array.from(new Set(excludedFolders));
     }
 
     // Load The String List and Set Open Folders State
@@ -221,7 +222,8 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
 
     // Save Excluded Folders to Settings as String
     function saveExcludedFoldersToSettings() {
-        plugin.settings.excludedFolders = excludedFolders.length > 1 ? excludedFolders.join(', ') : excludedFolders[0];
+        const foldersToSave = Array.from(new Set(excludedFolders.map((f) => f.trim()).filter((f) => f.length > 0)));
+        plugin.settings.excludedFolders = foldersToSave.join(', ');
         plugin.saveSettings();
     }
 

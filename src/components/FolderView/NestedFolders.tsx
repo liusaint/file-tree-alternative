@@ -152,7 +152,7 @@ export function NestedFolders(props: NestedFoldersProps) {
                 .setTitle('Add to Excluded Folders')
                 .setIcon('switch')
                 .onClick((ev: MouseEvent) => {
-                    setExcludedFolders([...excludedFolders, folder.path]);
+                    setExcludedFolders(Array.from(new Set([...excludedFolders, folder.path])));
                 });
         });
 

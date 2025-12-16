@@ -3,6 +3,32 @@ import FileTreeAlternativePlugin from 'main';
 import { FolderFileCountMap, FolderTree, OZFile, BookmarksPluginItem } from 'utils/types';
 import { VaultChangeModal } from 'modals';
 
+export type ExcludedFolderMatcher = {
+    raw: string;
+    regex: RegExp | null;
+};
+
+export const buildExcludedFolderMatchers = (excludedFolders: string[]): ExcludedFolderMatcher[] => {
+    return excludedFolders
+        .map((pattern) => (pattern ?? '').trim())
+        .filter((pattern) => pattern.length > 0)
+        .map((pattern) => {
+            try {
+                return { raw: pattern, regex: new RegExp(pattern) };
+            } catch (e) {
+                console.warn(`Invalid excluded folder regex: ${pattern}`, e);
+                return { raw: pattern, regex: null };
+            }
+        });
+};
+
+export const folderPathMatchesExclusion = (folderPath: string, matchers: ExcludedFolderMatcher[]): boolean => {
+    return matchers.some(({ raw, regex }) => {
+        if (regex) return regex.test(folderPath);
+        return folderPath === raw || folderPath.startsWith(`${raw}/`);
+    });
+};
+
 // Helper Function To Get List of Files
 export const getFilesUnderPath = (params: {
     path: string;
@@ -12,23 +38,33 @@ export const getFilesUnderPath = (params: {
     getAllFiles?: boolean;
 }): OZFile[] => {
     const { path, plugin, getAllFiles, excludedExtensions, excludedFolders } = params;
+    const excludedFolderMatchers = buildExcludedFolderMatchers(excludedFolders);
+    const shouldExcludeFolder = (folderPath: string) => folderPathMatchesExclusion(folderPath, excludedFolderMatchers);
+    const attachmentsFolderName = plugin.settings.attachmentsFolderName.toLowerCase();
+    const isAttachmentsFolder = (folder: TFolder) => plugin.settings.hideAttachments && folder.name.toLowerCase() === attachmentsFolderName;
+    const isUnderHiddenAttachments = (targetPath: string) =>
+        plugin.settings.hideAttachments && targetPath.toLowerCase().includes(attachmentsFolderName);
     var filesUnderPath: OZFile[] = [];
     var showFilesFromSubFolders = getAllFiles ? true : plugin.settings.showFilesFromSubFolders;
     var folderObj = plugin.app.vault.getAbstractFileByPath(path);
     recursiveFx(folderObj as TFolder, plugin.app);
     function recursiveFx(folderObj: TFolder, app: App) {
+        if (!folderObj) return;
+        if (shouldExcludeFolder(folderObj.path) || isUnderHiddenAttachments(folderObj.path)) return;
         if (folderObj instanceof TFolder && folderObj.children) {
             for (let child of folderObj.children) {
                 if (child instanceof TFile) {
                     if (
                         excludedExtensions.includes(child.extension) ||
-                        (plugin.settings.hideAttachments && child.path.toLowerCase().includes(plugin.settings.attachmentsFolderName.toLowerCase())) ||
-                        excludedFolders.includes(child.parent.path)
+                        isUnderHiddenAttachments(child.path)
                     )
                         continue;
                     filesUnderPath.push(TFile2OZFile(child));
                 }
-                if (child instanceof TFolder && showFilesFromSubFolders) recursiveFx(child, app);
+                if (child instanceof TFolder && showFilesFromSubFolders) {
+                    if (isAttachmentsFolder(child) || shouldExcludeFolder(child.path)) continue;
+                    recursiveFx(child, app);
+                }
             }
         }
     }
@@ -61,6 +97,7 @@ export const isFolderNote = (t: TFile) => {
 // Helper Function to Create Folder Tree
 export const createFolderTree = (params: { startFolder: TFolder; excludedFolders: string[]; plugin: FileTreeAlternativePlugin }): FolderTree => {
     const { startFolder, excludedFolders, plugin } = params;
+    const excludedFolderMatchers = buildExcludedFolderMatchers(excludedFolders);
     let fileTree: { folder: TFolder; children: any } = { folder: startFolder, children: [] };
     function recursive(folder: TFolder, object: { folder: TFolder; children: any }) {
         if (!(folder && folder.children)) return;
@@ -69,7 +106,7 @@ export const createFolderTree = (params: { startFolder: TFolder; excludedFolders
                 let childFolder: TFolder = child as TFolder;
                 if (
                     (plugin.settings.hideAttachments && childFolder.name === plugin.settings.attachmentsFolderName) ||
-                    (excludedFolders.length > 0 && excludedFolders.contains(child.path))
+                    folderPathMatchesExclusion(child.path, excludedFolderMatchers)
                 ) {
                     continue;
                 }

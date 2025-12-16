@@ -29,7 +29,7 @@ The plugin is updated quiet regularly. You can see the details of each release u
 Double Clicking again on the focused folder name will move focus to the parent folder.
 
 -   The plugin remembers `last expanded folders` and `last focused folder` state to load for the following session in case you relaunch your vault.
--   You can define certain `folder paths` in plugin settings to exclude from main folder list. All subfolders are going to be excluded, as well.
+-   You can define certain `folder paths` or regex patterns (comma/new line separated) in plugin settings to exclude from the main folder list (e.g. `^_assets$`, `\\.assets`). All subfolders are excluded, as well.
 -   You can turn on/off `root folder` within the file tree.
 -   You can customize the `folder icons`. Check the available options from plugin settings:
 
