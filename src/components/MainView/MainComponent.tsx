@@ -1,5 +1,5 @@
 import { TAbstractFile, TFile, TFolder, Notice } from 'obsidian';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FileComponent } from 'components/FileView/FileComponent';
 import { MainFolder } from 'components/FolderView/MainFolder';
 import { SingleViewVertical, SingleViewHorizontal } from 'components/MainView/SingleView';
@@ -37,6 +37,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     const [_showSubFolders, setShowSubFolders] = useRecoilState(recoilState.showSubFolders);
     const [focusedFolder, setFocusedFolder] = useRecoilState(recoilState.focusedFolder);
     const [activeOZFile, setActiveOzFile] = useRecoilState(recoilState.activeOZFile);
+    const excludedFoldersRef = useRef<string[]>(excludedFolders);
 
     const setNewFileList = (folderPath?: string) => {
         let filesPath = folderPath ? folderPath : activeFolderPath;
@@ -45,7 +46,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
                 path: filesPath,
                 plugin: plugin,
                 excludedExtensions: excludedExtensions,
-                excludedFolders: excludedFolders,
+                excludedFolders: excludedFoldersRef.current,
             })
         );
     };
@@ -144,6 +145,9 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     useEffect(() => savePinnedFoldersToSettings(), [pinnedFolders]);
     useEffect(() => saveOpenFoldersToSettings(), [openFolders]);
     useEffect(() => saveExcludedFoldersToSettings(), [excludedFolders]);
+    useEffect(() => {
+        excludedFoldersRef.current = excludedFolders;
+    }, [excludedFolders]);
 
     // If activeFolderPath is set, it means it should go to 'file' view
     useEffect(() => {
@@ -249,6 +253,7 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     function handleVaultChanges(file: TAbstractFile, changeType: VaultChange, oldPathBeforeRename?: string) {
         // Get Current States from Setters
         let currentActiveFolderPath: string = '';
+        const currentExcludedFolders = excludedFoldersRef.current;
 
         setActiveFolderPath((activeFolderPath) => {
             currentActiveFolderPath = activeFolderPath;
@@ -362,7 +367,9 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
             } else if (changeType === 'delete') {
                 setPinnedFolders((currentPinnedFolders) => currentPinnedFolders.filter((pinnedPath) => pinnedPath !== file.path));
             }
-            setFolderTree(FileTreeUtils.createFolderTree({ startFolder: currentFocusedFolder, plugin: plugin, excludedFolders: excludedFolders }));
+            setFolderTree(
+                FileTreeUtils.createFolderTree({ startFolder: currentFocusedFolder, plugin: plugin, excludedFolders: currentExcludedFolders })
+            );
             // if active folder is renamed, activefolderpath needs to be refreshed
             if (changeType === 'rename' && oldPathBeforeRename && currentActiveFolderPath === oldPathBeforeRename) {
                 setActiveFolderPath(file.path);
