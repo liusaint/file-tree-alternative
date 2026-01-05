@@ -199,9 +199,16 @@ export default class FileTreeAlternativePlugin extends Plugin {
         let event = new CustomEvent(eventTypes.revealFile, {
             detail: {
                 file: file,
+                revealLeaf: !this.isLeftSidebarCollapsed(),
             },
         });
         window.dispatchEvent(event);
+    };
+
+    private isLeftSidebarCollapsed = (): boolean => {
+        // @ts-ignore - accessing private API to check sidebar state
+        const leftSplit = this.app.workspace.leftSplit;
+        return leftSplit ? leftSplit.collapsed === true : false;
     };
 
     refreshIconRibbon = () => {

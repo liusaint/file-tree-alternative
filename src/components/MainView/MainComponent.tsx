@@ -392,8 +392,10 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     async function handleRevealFileEvent(evt: Event) {
         // @ts-ignore
         const file: TFile = evt.detail.file;
+        // @ts-ignore
+        const revealLeaf: boolean = evt.detail.revealLeaf !== false;
         if (file && file instanceof TFile) {
-            await plugin.openFileTreeLeaf(true);
+            await plugin.openFileTreeLeaf(revealLeaf);
             revealFileInFileTree(FileTreeUtils.TFile2OZFile(file));
         } else {
             new Notice('File not found');
