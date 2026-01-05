@@ -1,4 +1,4 @@
-import { Plugin, addIcon, TAbstractFile, Notice } from 'obsidian';
+import { Plugin, addIcon, TAbstractFile, Notice, TFile } from 'obsidian';
 import { FileTreeView } from './FileTreeView';
 import { ZoomInIcon, ZoomOutIcon, ZoomOutDoubleIcon, LocationIcon, SpaceIcon } from './utils/icons';
 import { FileTreeAlternativePluginSettings, FileTreeAlternativePluginSettingsTab, DEFAULT_SETTINGS } from './settings';
@@ -100,6 +100,7 @@ export default class FileTreeAlternativePlugin extends Plugin {
         this.app.vault.on('delete', this.onDelete);
         this.app.vault.on('modify', this.onModify);
         this.app.vault.on('rename', this.onRename);
+        this.registerEvent(this.app.workspace.on('file-open', this.onFileOpen));
 
         // Ribbon Icon For Opening
         this.refreshIconRibbon();
@@ -193,6 +194,15 @@ export default class FileTreeAlternativePlugin extends Plugin {
     onDelete = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'delete', '');
     onModify = (file: TAbstractFile) => this.triggerVaultChangeEvent(file, 'modify', '');
     onRename = (file: TAbstractFile, oldPath: string) => this.triggerVaultChangeEvent(file, 'rename', oldPath);
+    onFileOpen = (file: TFile | null) => {
+        if (!(file && this.settings.autoRevealOnFileChange)) return;
+        let event = new CustomEvent(eventTypes.revealFile, {
+            detail: {
+                file: file,
+            },
+        });
+        window.dispatchEvent(event);
+    };
 
     refreshIconRibbon = () => {
         this.ribbonIconEl?.remove();

@@ -18,6 +18,7 @@ export interface FileTreeAlternativePluginSettings {
     allSearchOnlyInFocusedFolder: boolean;
     showFilesFromSubFoldersButton: boolean;
     revealActiveFileButton: boolean;
+    autoRevealOnFileChange: boolean;
     excludedExtensions: string;
     excludedFolders: string;
     hideAttachments: boolean;
@@ -49,6 +50,7 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     allSearchOnlyInFocusedFolder: false,
     showFilesFromSubFoldersButton: true,
     revealActiveFileButton: false,
+    autoRevealOnFileChange: false,
     excludedExtensions: '',
     excludedFolders: '',
     hideAttachments: false,
@@ -270,6 +272,16 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                     this.plugin.settings.revealActiveFileButton = value;
                     this.plugin.saveSettings();
                     this.refreshView();
+                })
+            );
+
+        new Setting(containerEl)
+            .setName('Auto Reveal Active File on Focus')
+            .setDesc('Turn on to reveal the focused file automatically in the file tree when the active file changes.')
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.autoRevealOnFileChange).onChange(async (value) => {
+                    this.plugin.settings.autoRevealOnFileChange = value;
+                    await this.plugin.saveSettings();
                 })
             );
 
