@@ -493,6 +493,13 @@ svg.oz-folder-toggle path {
     vertical-align: middle !important;
 }
 
+.oz-folder-pin-icon {
+    margin-left: 4px;
+    vertical-align: middle !important;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
 .oz-nav-file-icon {
     line-height: 1;
     display: inline-block;

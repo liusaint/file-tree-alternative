@@ -198,13 +198,21 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     // Load The String List anad Set Pinned Files State
     function getPinnedFilesFromSettings(): OZFile[] {
         let pinnedFiles: OZFile[] = [];
+        let savedPaths: string[] = plugin.settings.pinnedFiles || [];
+        // Migrate old localStorage data (not synced across devices) to data.json
         let localStoragePinnedFiles = localStorage.getItem(plugin.keys.pinnedFilesKey);
         if (localStoragePinnedFiles) {
-            localStoragePinnedFiles = JSON.parse(localStoragePinnedFiles);
-            for (let file of localStoragePinnedFiles) {
-                let pinnedFile = plugin.app.vault.getAbstractFileByPath(file) as TFile;
-                if (pinnedFile) pinnedFiles.push(FileTreeUtils.TFile2OZFile(pinnedFile));
+            const oldPaths: string[] = JSON.parse(localStoragePinnedFiles);
+            if (oldPaths.length > 0) {
+                savedPaths = Array.from(new Set([...oldPaths, ...savedPaths]));
+                plugin.settings.pinnedFiles = savedPaths;
+                plugin.saveSettings();
             }
+            localStorage.removeItem(plugin.keys.pinnedFilesKey);
+        }
+        for (let file of savedPaths) {
+            let pinnedFile = plugin.app.vault.getAbstractFileByPath(file) as TFile;
+            if (pinnedFile) pinnedFiles.push(FileTreeUtils.TFile2OZFile(pinnedFile));
         }
         return pinnedFiles;
     }
@@ -212,10 +220,18 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
     // Load The String List and Set Pinned Folders State
     function getPinnedFoldersFromSettings(): string[] {
         let pinnedFolders: string[] = [];
+        const savedPaths: string[] = plugin.settings.pinnedFolders || [];
+        // Migrate old localStorage data (not synced across devices) to data.json
         let localStoragePinnedFolders = localStorage.getItem(plugin.keys.pinnedFoldersKey);
         if (localStoragePinnedFolders) {
-            pinnedFolders = JSON.parse(localStoragePinnedFolders);
+            const oldPaths: string[] = JSON.parse(localStoragePinnedFolders);
+            if (oldPaths.length > 0) {
+                plugin.settings.pinnedFolders = Array.from(new Set([...oldPaths, ...savedPaths]));
+                plugin.saveSettings();
+            }
+            localStorage.removeItem(plugin.keys.pinnedFoldersKey);
         }
+        pinnedFolders = plugin.settings.pinnedFolders || [];
         return pinnedFolders;
     }
 
@@ -234,12 +250,13 @@ export default function MainTreeComponent(props: MainTreeComponentProps) {
         for (let file of ozPinnedFiles) {
             pinnedFilesToSave.push(file.path);
         }
-        localStorage.setItem(plugin.keys.pinnedFilesKey, JSON.stringify(pinnedFilesToSave));
+        plugin.settings.pinnedFiles = pinnedFilesToSave;
+        plugin.saveSettings();
     }
 
     function savePinnedFoldersToSettings() {
-        const pinnedFoldersToSave = pinnedFolders.map((p) => p.trim()).filter((p) => p.length > 0);
-        localStorage.setItem(plugin.keys.pinnedFoldersKey, JSON.stringify(pinnedFoldersToSave));
+        plugin.settings.pinnedFolders = pinnedFolders.map((p) => p.trim()).filter((p) => p.length > 0);
+        plugin.saveSettings();
     }
 
     // Save Excluded Folders to Settings as String

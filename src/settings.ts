@@ -39,6 +39,8 @@ export interface FileTreeAlternativePluginSettings {
     deleteFileOption: DeleteFileOption;
     showFileNameAsFullPath: boolean;
     bookmarksEvents: boolean;
+    pinnedFolders: string[];
+    pinnedFiles: string[];
 }
 
 export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
@@ -71,6 +73,8 @@ export const DEFAULT_SETTINGS: FileTreeAlternativePluginSettings = {
     deleteFileOption: 'trash',
     showFileNameAsFullPath: false,
     bookmarksEvents: false,
+    pinnedFolders: [],
+    pinnedFiles: [],
 };
 
 export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
@@ -478,6 +482,8 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                     .setButtonText('Click for Clearing the Pinned files')
                     .onClick(async () => {
                         lsh.removeFromLocalStorage({ key: this.plugin.keys.pinnedFilesKey });
+                        this.plugin.settings.pinnedFiles = [];
+                        await this.plugin.saveSettings();
                         this.plugin.refreshTreeLeafs();
                         new Notice('The pinned files are cleared...');
                     });
@@ -492,6 +498,8 @@ export class FileTreeAlternativePluginSettingsTab extends PluginSettingTab {
                     .setButtonText('Click for Clearing the Pinned folders')
                     .onClick(async () => {
                         lsh.removeFromLocalStorage({ key: this.plugin.keys.pinnedFoldersKey });
+                        this.plugin.settings.pinnedFolders = [];
+                        await this.plugin.saveSettings();
                         this.plugin.refreshTreeLeafs();
                         new Notice('The pinned folders are cleared...');
                     });

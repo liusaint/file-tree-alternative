@@ -2,7 +2,7 @@ import { TFolder, Notice } from 'obsidian';
 import React, { useState, useMemo, useEffect } from 'react';
 import FileTreeAlternativePlugin from 'main';
 import Dropzone from 'react-dropzone';
-import { getFolderIcon, IoMdArrowDropright } from 'utils/icons';
+import { getFolderIcon, IoMdArrowDropright, FaThumbtack } from 'utils/icons';
 import * as recoilState from 'recoil/pluginState';
 import { useRecoilState } from 'recoil';
 import useLongPress from 'hooks/useLongPress';
@@ -26,6 +26,7 @@ export default function Tree(props: TreeProps) {
     const [openFolders, setOpenFolders] = useRecoilState(recoilState.openFolders);
     const [folderFileCountMap] = useRecoilState(recoilState.folderFileCountMap);
     const [activeFolderPath] = useRecoilState(recoilState.activeFolderPath);
+    const [pinnedFolders] = useRecoilState(recoilState.pinnedFolders);
 
     const longPressEvents = useLongPress((e: React.TouchEvent) => {
         props.onContextMenu(e);
@@ -178,6 +179,7 @@ export default function Tree(props: TreeProps) {
                                         ) : (
                                             ''
                                         )}
+                                        {pinnedFolders.includes(props.folder.path) && <FaThumbtack size={10} className="oz-folder-pin-icon" />}
                                     </div>
                                     {props.plugin.settings.folderCount && (
                                         <div className="oz-folder-count">
